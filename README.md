@@ -2,6 +2,8 @@
 
 ProcureSight is a Phase 1 procurement decision-intelligence system built over 47,128 purchase-order records. PostgreSQL and deterministic Python services remain the source of truth; the AI layer only explains verified opportunities and never calculates prices, performance, or savings.
 
+For a complete new-laptop walkthrough, including database-password setup and troubleshooting, see [`INSTRUCTIONS_TO_RUN.md`](./INSTRUCTIONS_TO_RUN.md).
+
 ## 1. Project overview
 
 The system provides:
