@@ -1,0 +1,14 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+data/import_rejections.json
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+.DS_Store

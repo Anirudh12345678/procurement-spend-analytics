@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink-950: #111827;
+  --color-navy-950: #0b172a;
+  --color-navy-900: #10213a;
+  --color-teal-600: #0d9488;
+  --color-teal-500: #14b8a6;
+  --color-surface: #f5f7fa;
+  --font-sans: "Inter", "SF Pro Text", "Segoe UI", sans-serif;
+}
+
+:root {
+  color: #172033;
+  background: #f5f7fa;
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.panel {
+  @apply rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)];
+}
+
+.focus-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2;
+}
+
+.recharts-cartesian-axis-tick-value {
+  font-size: 12px;
+  fill: #64748b;
+}
