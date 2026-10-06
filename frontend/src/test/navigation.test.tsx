@@ -1,10 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
 
 describe("navigation", () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    window.history.pushState({}, "", "/");
+  });
 
   it("navigates to the optimization workspace", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
@@ -17,5 +20,25 @@ describe("navigation", () => {
     await userEvent.click(await screen.findByRole("link", { name: "Cost Optimization" }));
     expect(await screen.findByRole("heading", { name: /Prioritized, explainable procurement opportunities/i })).toBeInTheDocument();
     expect(screen.getByText("No opportunities match these filters.")).toBeInTheDocument();
+  });
+
+  it("shows all workspaces and applies spend dates from the top bar", async () => {
+    window.history.pushState({}, "", "/spend");
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = new URL(String(input));
+      if (url.pathname === "/api/suppliers") return new Response(JSON.stringify({ items: [], total: 0, page: 1, page_size: 100, pages: 0 }), { status: 200 });
+      if (url.pathname.endsWith("/categories") || url.pathname.endsWith("/business-units")) return new Response(JSON.stringify([]), { status: 200 });
+      if (url.pathname.endsWith("/supplier-concentration")) return new Response(JSON.stringify({ total_spend: "0", supplier_count: 0, top_5_spend: "0", top_5_concentration_percent: "0", top_10_spend: "0", top_10_concentration_percent: "0" }), { status: 200 });
+      return new Response(JSON.stringify([]), { status: 200 });
+    });
+
+    render(<App />);
+
+    expect(await screen.findByRole("link", { name: "Dashboard" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Spend Analysis" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Cost Optimization" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "AI Advisor" })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Top bar from date"), { target: { value: "2025-01-01" } });
+    await waitFor(() => expect(window.location.search).toContain("date_from=2025-01-01"));
   });
 });

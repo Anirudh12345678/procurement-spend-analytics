@@ -69,6 +69,9 @@ class OptimizationEngine:
                 PurchaseOrder.item_id,
                 PurchaseOrder.supplier_id,
                 func.sum(PurchaseOrder.line_total).label("spend"),
+                func.sum(PurchaseOrder.unit_price * PurchaseOrder.quantity).label(
+                    "weighted_value"
+                ),
                 func.sum(PurchaseOrder.quantity).label("quantity"),
                 func.count(PurchaseOrder.po_id).label("transaction_count"),
             )
@@ -79,7 +82,9 @@ class OptimizationEngine:
             SupplierItemAggregate(
                 item_id=int(row.item_id),
                 supplier_id=row.supplier_id,
-                weighted_price=quantize(Decimal(row.spend) / Decimal(row.quantity)),
+                weighted_price=quantize(
+                    Decimal(row.weighted_value) / Decimal(row.quantity)
+                ),
                 quantity=Decimal(row.quantity),
                 spend=Decimal(row.spend),
                 transaction_count=int(row.transaction_count),
@@ -462,7 +467,14 @@ class OptimizationEngine:
                             Decimal(stats["on_contract_spend"]) / spend
                         ),
                         "benchmark_coverage_rate": _json_decimal(coverage),
-                        "method": "configurable 40/25/20/15 price-quality-delivery-contract score",
+                        "method": (
+                            "configurable "
+                            f"{self.config.supplier_score_price_weight * HUNDRED}/"
+                            f"{self.config.supplier_score_quality_weight * HUNDRED}/"
+                            f"{self.config.supplier_score_delivery_weight * HUNDRED}/"
+                            f"{self.config.supplier_score_contract_weight * HUNDRED} "
+                            "price-quality-delivery-contract score"
+                        ),
                     },
                 )
             )

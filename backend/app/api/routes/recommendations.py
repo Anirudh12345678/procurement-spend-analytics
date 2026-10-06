@@ -1,6 +1,6 @@
-from typing import Literal
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.api.dependencies import (
     DatabaseSession,
@@ -55,9 +55,12 @@ def recommendations(
     session: DatabaseSession,
     pagination: Pagination,
     opportunity_type: OpportunityType | None = None,
+    opportunity_id: Annotated[int | None, Query(ge=1)] = None,
 ) -> PaginatedResponse[RecommendationResponse]:
     return RecommendationService(session).recommendations(
-        pagination, opportunity_type=opportunity_type
+        pagination,
+        opportunity_type=opportunity_type,
+        opportunity_id=opportunity_id,
     )
 
 

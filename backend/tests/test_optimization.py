@@ -3,7 +3,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import CostOpportunity, ItemBenchmark
+from app.models import CostOpportunity, ItemBenchmark, PurchaseOrder
 from app.optimization.config import OptimizationConfig
 from app.optimization.engine import OptimizationEngine
 from app.optimization.formulas import (
@@ -46,6 +46,27 @@ def test_quantity_weighted_supplier_price() -> None:
         [(Decimal("10"), Decimal("1")), (Decimal("20"), Decimal("3"))]
     )
     assert result == Decimal("17.5000")
+
+
+def test_engine_weighted_price_uses_unit_price_times_quantity(
+    analytics_session: Session,
+) -> None:
+    """A stored line total must not become the benchmark price numerator."""
+
+    order = analytics_session.get(PurchaseOrder, "PO-TEST-001")
+    assert order is not None
+    order.line_total = Decimal("999.00")
+    analytics_session.flush()
+
+    aggregate = next(
+        row
+        for row in OptimizationEngine(
+            analytics_session, optimization_config()
+        )._supplier_item_aggregates()
+        if row.supplier_id == "SUP-001"
+    )
+
+    assert aggregate.weighted_price == Decimal("100.0000")
 
 
 def test_continuous_p25_uses_supplier_level_distribution() -> None:

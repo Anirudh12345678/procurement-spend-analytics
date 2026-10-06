@@ -32,4 +32,20 @@ describe("Dashboard", () => {
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Offline"));
     expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
   });
+
+  it("renders explicit empty states when the backend has no procurement data", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const path = new URL(String(input)).pathname.replace("/api", "");
+      if (path === "/dashboard/summary") return new Response(JSON.stringify({ total_spend: "0", total_orders: 0, average_order_value: "0", supplier_count: 0, category_count: 0, business_unit_count: 0 }), { status: 200 });
+      if (path === "/analytics/contract-compliance") return new Response(JSON.stringify({ total_spend: "0", total_orders: 0, on_contract_spend: "0", off_contract_spend: "0", on_contract_percent: "0", off_contract_percent: "0", on_contract_order_count: 0, off_contract_order_count: 0 }), { status: 200 });
+      if (path === "/opportunities/summary") return new Response(JSON.stringify({ active_opportunity_count: 0, estimated_price_optimization_savings: "0", review_spend: "0", critical_count: 0, high_priority_count: 0, price_optimization_count: 0, contract_leakage_count: 0, supplier_consolidation_count: 0, supplier_performance_count: 0, savings_note: "No opportunities" }), { status: 200 });
+      return new Response(JSON.stringify([]), { status: 200 });
+    });
+
+    render(<Dashboard />);
+
+    expect(await screen.findByText(/No procurement transactions are available yet/i)).toBeInTheDocument();
+    expect(screen.getByText("No monthly spend data is available.")).toBeInTheDocument();
+    expect(screen.getByText("No supplier spend is available.")).toBeInTheDocument();
+  });
 });

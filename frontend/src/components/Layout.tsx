@@ -1,6 +1,6 @@
 import { BarChart3, Bot, Gauge, Menu, Target, X } from "lucide-react";
 import { useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useSearchParams } from "react-router-dom";
 
 const links = [
   { to: "/", label: "Dashboard", icon: Gauge },
@@ -8,6 +8,58 @@ const links = [
   { to: "/optimization", label: "Cost Optimization", icon: Target },
   { to: "/advisor", label: "AI Advisor", icon: Bot },
 ];
+
+function SpendDateControls() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const updateDate = (key: "date_from" | "date_to", value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    setSearchParams(next);
+  };
+
+  const hasDateFilter = searchParams.has("date_from") || searchParams.has("date_to");
+
+  return (
+    <div className="hidden items-end gap-2 md:flex" aria-label="Top bar date filters">
+      <label className="text-[11px] font-semibold text-slate-500">
+        From
+        <input
+          aria-label="Top bar from date"
+          type="date"
+          value={searchParams.get("date_from") ?? ""}
+          onChange={(event) => updateDate("date_from", event.target.value)}
+          className="mt-1 block rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-normal text-slate-700"
+        />
+      </label>
+      <label className="text-[11px] font-semibold text-slate-500">
+        To
+        <input
+          aria-label="Top bar to date"
+          type="date"
+          value={searchParams.get("date_to") ?? ""}
+          onChange={(event) => updateDate("date_to", event.target.value)}
+          className="mt-1 block rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-normal text-slate-700"
+        />
+      </label>
+      {hasDateFilter ? (
+        <button
+          type="button"
+          onClick={() => {
+            const next = new URLSearchParams(searchParams);
+            next.delete("date_from");
+            next.delete("date_to");
+            setSearchParams(next);
+          }}
+          className="mb-0.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+        >
+          Clear dates
+        </button>
+      ) : null}
+    </div>
+  );
+}
 
 export function Layout() {
   const [open, setOpen] = useState(false);
@@ -63,13 +115,16 @@ export function Layout() {
               <h1 className="text-xl font-semibold text-slate-900">{pageTitle}</h1>
             </div>
           </div>
-          <div className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 sm:flex">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" /> Live data
-          </div>
+          {location.pathname === "/spend" ? (
+            <SpendDateControls />
+          ) : (
+            <div className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 sm:flex">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" /> Live data
+            </div>
+          )}
         </header>
         <main className="mx-auto max-w-[1600px] p-5 md:p-8"><Outlet /></main>
       </div>
     </div>
   );
 }
-

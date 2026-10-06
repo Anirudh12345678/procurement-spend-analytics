@@ -73,6 +73,15 @@ export interface SupplierRecord {
   country: string;
 }
 
+export interface SupplierDetail extends SupplierRecord {
+  total_spend: Money;
+  transaction_count: number;
+  total_quantity: Money;
+  on_contract_percent: Money;
+  rejection_rate_percent: Money;
+  late_delivery_rate_percent: Money;
+}
+
 export interface CategoryRecord {
   category_id: number;
   category_name: string;
@@ -137,6 +146,24 @@ export interface OpportunitySummary {
   savings_note: string;
 }
 
+export interface Benchmark {
+  benchmark_id: number;
+  item_id: number;
+  item_name: string;
+  category_id: number;
+  category_name: string;
+  benchmark_price: Money;
+  min_price: Money;
+  max_price: Money;
+  median_price: Money;
+  p25_price: Money;
+  p75_price: Money;
+  supplier_count: number;
+  total_quantity: Money;
+  total_spend: Money;
+  calculated_at: string;
+}
+
 export interface Recommendation {
   recommendation_id: number;
   opportunity_id: number;
@@ -155,4 +182,3 @@ export interface Recommendation {
   prompt_version: string;
   created_at: string;
 }
-

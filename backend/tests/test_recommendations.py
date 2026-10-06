@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from decimal import Decimal
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
@@ -13,7 +14,7 @@ from app.main import app
 from app.models import AIRecommendation
 from app.optimization.engine import OptimizationEngine
 from app.schemas.recommendations import GeneratedRecommendation
-from app.services.llm import OpenAIResponsesClient
+from app.services.llm import LLMProviderError, OpenAIResponsesClient
 from app.services.recommendations import RecommendationService
 from tests.test_optimization import optimization_config
 
@@ -47,6 +48,22 @@ class TransactionSession:
 
     def close(self) -> None:
         self.closed = True
+
+
+class FakeHTTPClient:
+    def __init__(self, outcome: httpx.Response | Exception):
+        self.outcome = outcome
+
+    def __enter__(self) -> "FakeHTTPClient":
+        return self
+
+    def __exit__(self, *_args: object) -> None:
+        return None
+
+    def post(self, *_args: object, **_kwargs: object) -> httpx.Response:
+        if isinstance(self.outcome, Exception):
+            raise self.outcome
+        return self.outcome
 
 
 def valid_output(impact: Decimal) -> dict:
@@ -85,6 +102,42 @@ def test_openai_schema_is_converted_to_strict_supported_shape() -> None:
     assert set(schema["required"]) == set(schema["properties"])
     assert "default" not in str(schema)
     assert "minLength" not in str(schema)
+
+
+@pytest.mark.parametrize(
+    ("status_code", "expected_message"),
+    [(429, "rate limit"), (500, "HTTP 500")],
+)
+def test_openai_provider_http_errors_are_safe_and_explicit(
+    monkeypatch, status_code: int, expected_message: str
+) -> None:
+    request = httpx.Request("POST", "https://api.openai.com/v1/responses")
+    response = httpx.Response(status_code, request=request)
+    monkeypatch.setattr(
+        "app.services.llm.httpx.Client",
+        lambda **_kwargs: FakeHTTPClient(response),
+    )
+    client = OpenAIResponsesClient(api_key="test-secret", model="test-model", timeout_seconds=1)
+
+    with pytest.raises(LLMProviderError, match=expected_message) as exc:
+        client.generate(system_prompt="safe", context_json="{}", schema={})
+
+    assert "test-secret" not in str(exc.value)
+
+
+def test_openai_provider_timeout_is_wrapped_without_secret_leakage(monkeypatch) -> None:
+    request = httpx.Request("POST", "https://api.openai.com/v1/responses")
+    timeout = httpx.ReadTimeout("timed out", request=request)
+    monkeypatch.setattr(
+        "app.services.llm.httpx.Client",
+        lambda **_kwargs: FakeHTTPClient(timeout),
+    )
+    client = OpenAIResponsesClient(api_key="test-secret", model="test-model", timeout_seconds=1)
+
+    with pytest.raises(LLMProviderError, match="timed out") as exc:
+        client.generate(system_prompt="safe", context_json="{}", schema={})
+
+    assert "test-secret" not in str(exc.value)
 
 
 def test_database_dependency_commits_successful_write_requests(monkeypatch) -> None:
@@ -212,12 +265,20 @@ def test_recommendation_api_uses_mock_and_supports_listing(
                 json={"opportunity_id": opportunity_id},
             )
             listed = client.get("/api/recommendations")
+            filtered = client.get(
+                f"/api/recommendations?opportunity_id={opportunity_id}&page_size=1"
+            )
+            invalid_filter = client.get("/api/recommendations?opportunity_id=0")
             detail = client.get(f"/api/recommendations/{generated.json()['recommendation_id']}")
 
         assert generated.status_code == 201
         assert generated.json()["estimated_impact"] == str(context.expected_impact)
         assert listed.status_code == 200
         assert listed.json()["total"] == 1
+        assert filtered.status_code == 200
+        assert filtered.json()["total"] == 1
+        assert filtered.json()["items"][0]["opportunity_id"] == opportunity_id
+        assert invalid_filter.status_code == 422
         assert detail.status_code == 200
         assert detail.json()["model_name"] == "mock-model"
     finally:

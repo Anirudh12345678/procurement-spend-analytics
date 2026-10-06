@@ -11,10 +11,19 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const requestInit = {
     ...init,
     headers: { "Content-Type": "application/json", ...init?.headers },
-  });
+  };
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, requestInit);
+  } catch (reason) {
+    const method = (init?.method ?? "GET").toUpperCase();
+    if (method !== "GET" || !(reason instanceof TypeError)) throw reason;
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    response = await fetch(`${API_BASE}${path}`, requestInit);
+  }
   if (!response.ok) {
     let message = `Request failed (${response.status})`;
     let code = "API_ERROR";
@@ -46,4 +55,3 @@ export function queryString(values: Record<string, string | number | undefined |
   const encoded = params.toString();
   return encoded ? `?${encoded}` : "";
 }
-

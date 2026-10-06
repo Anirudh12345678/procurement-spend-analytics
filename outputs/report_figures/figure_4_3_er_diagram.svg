@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.12"/></filter>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0L10 5 0 10Z" fill="#64748b"/></marker>
+    <style>.t{font:700 36px Inter,Arial;fill:#0f172a}.st{font:400 17px Inter,Arial;fill:#64748b}.h{font:700 18px Inter,Arial;fill:#fff}.f{font:400 13px Inter,Arial;fill:#334155}.pk{font:700 13px Inter,Arial;fill:#0e7490}.fk{font:600 13px Inter,Arial;fill:#7c3aed}.rel{font:700 13px Inter,Arial;fill:#475569}</style>
+  </defs>
+  <rect width="1600" height="900" fill="#f8fafc"/><rect width="1600" height="12" fill="#06b6d4"/>
+  <text x="60" y="65" class="t">Normalized Entity Relationship Structure</text><text x="60" y="98" class="st">Eight-table PostgreSQL model with enforced primary and foreign-key relationships</text>
+
+  <!-- relationships -->
+  <path d="M295 224H390" stroke="#64748b" stroke-width="3" marker-end="url(#a)"/><text x="325" y="211" class="rel">1 : N</text>
+  <path d="M295 506H390" stroke="#64748b" stroke-width="3" marker-end="url(#a)"/><text x="325" y="493" class="rel">1 : N</text>
+  <path d="M790 225H900" stroke="#64748b" stroke-width="3" marker-end="url(#a)"/><text x="825" y="212" class="rel">1 : 1</text>
+  <path d="M790 320V430" stroke="#64748b" stroke-width="3" marker-end="url(#a)"/><text x="800" y="380" class="rel">1 : N</text>
+  <path d="M295 705H540V655" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a)"/><text x="330" y="692" class="rel">1 : N</text>
+  <path d="M700 655V690H1000V655" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a)"/><text x="820" y="683" class="rel">item 1 : N</text>
+  <path d="M295 545H960V505" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a)"/><text x="525" y="535" class="rel">supplier 1 : N</text>
+  <path d="M1250 505H1325" stroke="#64748b" stroke-width="3" marker-end="url(#a)"/><text x="1268" y="492" class="rel">1 : N</text>
+
+  <!-- categories -->
+  <g filter="url(#s)"><rect x="60" y="155" width="235" height="140" rx="14" fill="#fff" stroke="#cbd5e1"/><path d="M60 169q0-14 14-14h207q14 0 14 14v34H60z" fill="#0f172a"/></g>
+  <text x="178" y="187" text-anchor="middle" class="h">categories</text><text x="78" y="229" class="pk">PK category_id</text><text x="78" y="255" class="f">category_name · UNIQUE</text>
+  <!-- items -->
+  <g filter="url(#s)"><rect x="390" y="145" width="400" height="175" rx="14" fill="#fff" stroke="#67e8f9"/><path d="M390 159q0-14 14-14h372q14 0 14 14v34H390z" fill="#0891b2"/></g>
+  <text x="590" y="177" text-anchor="middle" class="h">items</text><text x="410" y="218" class="pk">PK item_id</text><text x="410" y="244" class="f">item_name</text><text x="410" y="270" class="fk">FK category_id → categories</text><text x="410" y="296" class="f">UNIQUE (item_name, category_id)</text>
+  <!-- benchmark -->
+  <g filter="url(#s)"><rect x="900" y="130" width="330" height="220" rx="14" fill="#fff" stroke="#5eead4"/><path d="M900 144q0-14 14-14h302q14 0 14 14v34H900z" fill="#0f766e"/></g>
+  <text x="1065" y="162" text-anchor="middle" class="h">item_benchmarks</text><text x="920" y="203" class="pk">PK benchmark_id</text><text x="920" y="229" class="fk">FK item_id → items · UNIQUE</text><text x="920" y="255" class="f">benchmark_price · p25 · median · p75</text><text x="920" y="281" class="f">min_price · max_price</text><text x="920" y="307" class="f">supplier_count · quantity · spend</text><text x="920" y="333" class="f">calculated_at</text>
+
+  <!-- suppliers -->
+  <g filter="url(#s)"><rect x="60" y="425" width="235" height="160" rx="14" fill="#fff" stroke="#c4b5fd"/><path d="M60 439q0-14 14-14h207q14 0 14 14v34H60z" fill="#7c3aed"/></g>
+  <text x="178" y="457" text-anchor="middle" class="h">suppliers</text><text x="78" y="498" class="pk">PK supplier_id</text><text x="78" y="524" class="f">supplier_name · UNIQUE</text><text x="78" y="550" class="f">supplier_country · INDEX</text><text x="78" y="576" class="f">created_at</text>
+  <!-- purchase orders -->
+  <g filter="url(#s)"><rect x="390" y="400" width="400" height="255" rx="14" fill="#fff" stroke="#fcd34d"/><path d="M390 414q0-14 14-14h372q14 0 14 14v34H390z" fill="#d97706"/></g>
+  <text x="590" y="432" text-anchor="middle" class="h">purchase_orders</text><text x="410" y="474" class="pk">PK po_id · original source identifier</text><text x="410" y="500" class="fk">FK supplier_id → suppliers</text><text x="410" y="526" class="fk">FK item_id → items</text><text x="410" y="552" class="fk">FK business_unit_id → business_units</text><text x="410" y="578" class="f">order / promised / actual delivery dates</text><text x="410" y="604" class="f">quantity · unit_price · line_total</text><text x="410" y="630" class="f">payment_terms · on_contract · rejected</text>
+  <!-- opportunities -->
+  <g filter="url(#s)"><rect x="900" y="400" width="350" height="255" rx="14" fill="#fff" stroke="#fb7185"/><path d="M900 414q0-14 14-14h322q14 0 14 14v34H900z" fill="#be123c"/></g>
+  <text x="1075" y="432" text-anchor="middle" class="h">cost_opportunities</text><text x="920" y="474" class="pk">PK opportunity_id</text><text x="920" y="500" class="fk">FK item_id → items</text><text x="920" y="526" class="fk">FK supplier_id → suppliers · nullable</text><text x="920" y="552" class="f">type · actual / benchmark price · variance</text><text x="920" y="578" class="f">estimated_savings · review_spend</text><text x="920" y="604" class="f">confidence · priority · status</text><text x="920" y="630" class="f">supporting_metrics · created_at</text>
+  <!-- AI -->
+  <g filter="url(#s)"><rect x="1325" y="395" width="235" height="270" rx="14" fill="#fff" stroke="#67e8f9"/><path d="M1325 409q0-14 14-14h207q14 0 14 14v34H1325z" fill="#0891b2"/></g>
+  <text x="1442" y="427" text-anchor="middle" class="h">ai_recommendations</text><text x="1343" y="468" class="pk">PK recommendation_id</text><text x="1343" y="494" class="fk">FK opportunity_id</text><text x="1343" y="520" class="f">title · summary · reasoning</text><text x="1343" y="546" class="f">recommended_action</text><text x="1343" y="572" class="f">impact · risks · next_steps</text><text x="1343" y="598" class="f">context_snapshot</text><text x="1343" y="624" class="f">model · prompt · timestamp</text>
+  <!-- BU -->
+  <g filter="url(#s)"><rect x="60" y="650" width="235" height="130" rx="14" fill="#fff" stroke="#fdba74"/><path d="M60 664q0-14 14-14h207q14 0 14 14v34H60z" fill="#ea580c"/></g>
+  <text x="178" y="682" text-anchor="middle" class="h">business_units</text><text x="78" y="724" class="pk">PK business_unit_id</text><text x="78" y="750" class="f">business_unit_name · UNIQUE</text>
+  <text x="60" y="850" class="st">Figure 4.3. Normalized Entity Relationship Structure</text>
+</svg>

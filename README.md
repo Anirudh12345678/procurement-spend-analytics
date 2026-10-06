@@ -157,7 +157,7 @@ cd frontend
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`. The application contains Executive Dashboard, Spend Analysis, Cost Optimization, and AI Advisor workspaces. It includes loading, error, empty, pagination, filtering, opportunity detail, and responsive navigation states.
+Open `http://127.0.0.1:5173`. The application contains Executive Dashboard, Spend Analysis, Cost Optimization, and AI Advisor workspaces. It includes loading, error and empty states; URL-synchronized date filters; sortable and paginated supplier results; enriched benchmark, supplier and recommendation evidence in opportunity details; and responsive navigation.
 
 ## 11. Running tests and checks
 
@@ -195,7 +195,7 @@ Reference and optimization:
 - `GET /api/benchmarks`, `/api/benchmarks/{item_id}`
 - `GET /api/opportunities`, `/api/opportunities/{opportunity_id}`, `/api/opportunities/summary`
 - `POST /api/recommendations/generate`
-- `GET /api/recommendations`, `/api/recommendations/{recommendation_id}`
+- `GET /api/recommendations`, `/api/recommendations/{recommendation_id}` (the list supports an exact `opportunity_id` filter for detail views)
 
 Analytics share common inclusive filters: `date_from`, `date_to`, `supplier_id`, `category_id`, `business_unit_id`, and `country`. Large resources use validated `page` and `page_size` parameters. Opportunity filters include type, priority, supplier, category, item, status, creation dates, and sort direction. Validation errors use a consistent `{ "error": { "code", "message", "details" } }` shape.
 
@@ -208,7 +208,7 @@ SQL aggregation calculates spend, counts, averages, shares, ranks, and supplier 
 For every item and supplier:
 
 ```text
-weighted supplier price = SUM(line_total) / SUM(quantity)
+weighted supplier price = SUM(unit_price × quantity) / SUM(quantity)
 ```
 
 The engine then calculates the continuous distribution over supplier-level weighted prices and stores min, p25, median, p75, max, supplier count, quantity, and spend. The p25 supplier price—not the cheapest transaction—is the benchmark. The clean run produced 50 item benchmarks.
@@ -234,6 +234,7 @@ The OpenAI Responses API receives structured context and a strict JSON Schema. P
 
 - Phase 1 uses one imported currency and does not perform FX conversion.
 - Benchmarks are internal supplier-price distributions, not external market prices.
+- `item_benchmarks` stores the latest calculated snapshot per item; Phase 1 does not retain benchmark history.
 - Recommendations require human procurement and commercial review.
 - The current API has no authentication/authorization layer and is intended for a controlled local or internal environment.
 - Opportunity refresh is an explicit command, not a scheduled job.

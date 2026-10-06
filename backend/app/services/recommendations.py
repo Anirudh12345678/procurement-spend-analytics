@@ -340,10 +340,13 @@ class RecommendationService:
         pagination: PaginationParams,
         *,
         opportunity_type: str | None = None,
+        opportunity_id: int | None = None,
     ) -> PaginatedResponse[RecommendationResponse]:
         conditions = []
         if opportunity_type:
             conditions.append(CostOpportunity.opportunity_type == opportunity_type)
+        if opportunity_id is not None:
+            conditions.append(AIRecommendation.opportunity_id == opportunity_id)
         base = self._base_query().where(*conditions)
         total = self.session.scalar(select(func.count()).select_from(base.subquery())) or 0
         rows = self.session.execute(

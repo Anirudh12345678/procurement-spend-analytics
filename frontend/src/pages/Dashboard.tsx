@@ -1,6 +1,6 @@
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { api } from "../api/client";
-import { ErrorState, KpiCard, LoadingState, PageIntro, Panel } from "../components/UI";
+import { EmptyState, ErrorState, KpiCard, LoadingState, PageIntro, Panel } from "../components/UI";
 import { currency, percent } from "../format";
 import { useAsync } from "../hooks/useAsync";
 import type { BusinessUnitAnalytics, CategoryAnalytics, ContractAnalytics, DashboardSummary, MonthlyAnalytics, OpportunitySummary, SupplierAnalytics } from "../types";
@@ -43,6 +43,7 @@ export function Dashboard() {
     { name: "On contract", value: Number(data.contract.on_contract_spend), color: "#0891b2" },
     { name: "Off contract", value: Number(data.contract.off_contract_spend), color: "#f59e0b" },
   ];
+  const contractSpend = contract.reduce((total, entry) => total + entry.value, 0);
 
   return (
     <>
@@ -56,24 +57,30 @@ export function Dashboard() {
         <KpiCard label="Cost opportunities" value={currency(data.opportunities.estimated_price_optimization_savings, true)} detail={`${data.opportunities.active_opportunity_count} active findings`} accent="emerald" />
       </div>
 
+      {data.summary.total_orders === 0 ? (
+        <div className="mt-6">
+          <EmptyState message="No procurement transactions are available yet. Import purchase-order data to populate the executive dashboard." />
+        </div>
+      ) : null}
+
       <div className="mt-6 grid gap-6 xl:grid-cols-3">
         <Panel title="Monthly spend" subtitle="Spend movement across the available period" className="xl:col-span-2">
-          <div className="h-80" aria-label="Monthly spend line chart">
-            <ResponsiveContainer width="100%" height="100%"><LineChart data={monthly} margin={{ left: 8, right: 8 }}><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" /><XAxis dataKey="label" tick={{ fontSize: 11 }} /><YAxis tickFormatter={(value) => currency(value, true)} tick={{ fontSize: 11 }} width={72} /><Tooltip formatter={tooltipFormatter} /><Line type="monotone" dataKey="value" name="Spend" stroke="#0891b2" strokeWidth={3} dot={false} /></LineChart></ResponsiveContainer>
-          </div>
+          {monthly.length === 0 ? <EmptyState message="No monthly spend data is available." /> : <div className="h-80 min-w-0" aria-label="Monthly spend line chart">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}><LineChart data={monthly} margin={{ left: 8, right: 8 }}><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" /><XAxis dataKey="label" tick={{ fontSize: 11 }} /><YAxis tickFormatter={(value) => currency(value, true)} tick={{ fontSize: 11 }} width={72} /><Tooltip formatter={tooltipFormatter} /><Line type="monotone" dataKey="value" name="Spend" stroke="#0891b2" strokeWidth={3} dot={false} isAnimationActive={false} /></LineChart></ResponsiveContainer>
+          </div>}
         </Panel>
         <Panel title="Contract compliance" subtitle={`${percent(data.contract.on_contract_percent)} of spend is on contract`}>
-          <div className="h-64" aria-label="Contract compliance chart"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={contract} dataKey="value" nameKey="name" innerRadius={65} outerRadius={90} paddingAngle={3}>{contract.map((entry) => <Cell key={entry.name} fill={entry.color} />)}</Pie><Tooltip formatter={tooltipFormatter} /></PieChart></ResponsiveContainer></div>
-          <div className="grid grid-cols-2 gap-3 text-center text-sm"><div className="rounded-lg bg-cyan-50 p-3"><strong className="block text-cyan-800">{percent(data.contract.on_contract_percent)}</strong><span className="text-xs text-slate-500">On contract</span></div><div className="rounded-lg bg-amber-50 p-3"><strong className="block text-amber-800">{percent(data.contract.off_contract_percent)}</strong><span className="text-xs text-slate-500">Off contract</span></div></div>
+          {contractSpend === 0 ? <EmptyState message="No contract-compliance spend is available." /> : <><div className="h-64 min-w-0" aria-label="Contract compliance chart"><ResponsiveContainer width="100%" height="100%" minWidth={0}><PieChart><Pie data={contract} dataKey="value" nameKey="name" innerRadius={65} outerRadius={90} paddingAngle={3} isAnimationActive={false}>{contract.map((entry) => <Cell key={entry.name} fill={entry.color} />)}</Pie><Tooltip formatter={tooltipFormatter} /></PieChart></ResponsiveContainer></div>
+          <div className="grid grid-cols-2 gap-3 text-center text-sm"><div className="rounded-lg bg-cyan-50 p-3"><strong className="block text-cyan-800">{percent(data.contract.on_contract_percent)}</strong><span className="text-xs text-slate-500">On contract</span></div><div className="rounded-lg bg-amber-50 p-3"><strong className="block text-amber-800">{percent(data.contract.off_contract_percent)}</strong><span className="text-xs text-slate-500">Off contract</span></div></div></>}
         </Panel>
         <Panel title="Category spend" subtitle="Highest-spend categories">
-          <div className="h-72" aria-label="Category spend chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={categories} layout="vertical" margin={{ left: 10 }}><XAxis type="number" tickFormatter={(value) => currency(value, true)} tick={{ fontSize: 10 }} /><YAxis type="category" dataKey="name" width={105} tick={{ fontSize: 11 }} /><Tooltip formatter={tooltipFormatter} /><Bar dataKey="value" name="Spend" fill="#0f172a" radius={[0, 5, 5, 0]} /></BarChart></ResponsiveContainer></div>
+          {categories.length === 0 ? <EmptyState message="No category spend is available." /> : <div className="h-72 min-w-0" aria-label="Category spend chart"><ResponsiveContainer width="100%" height="100%" minWidth={0}><BarChart data={categories} layout="vertical" margin={{ left: 10 }}><XAxis type="number" tickFormatter={(value) => currency(value, true)} tick={{ fontSize: 10 }} /><YAxis type="category" dataKey="name" width={105} tick={{ fontSize: 11 }} /><Tooltip formatter={tooltipFormatter} /><Bar dataKey="value" name="Spend" fill="#0f172a" radius={[0, 5, 5, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></div>}
         </Panel>
         <Panel title="Top suppliers" subtitle="Spend ranked by supplier">
-          <div className="h-72" aria-label="Supplier spend chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={suppliers} layout="vertical" margin={{ left: 10 }}><XAxis type="number" tickFormatter={(value) => currency(value, true)} tick={{ fontSize: 10 }} /><YAxis type="category" dataKey="name" width={115} tick={{ fontSize: 10 }} /><Tooltip formatter={tooltipFormatter} /><Bar dataKey="value" name="Spend" fill="#0891b2" radius={[0, 5, 5, 0]} /></BarChart></ResponsiveContainer></div>
+          {suppliers.length === 0 ? <EmptyState message="No supplier spend is available." /> : <div className="h-72 min-w-0" aria-label="Supplier spend chart"><ResponsiveContainer width="100%" height="100%" minWidth={0}><BarChart data={suppliers} layout="vertical" margin={{ left: 10 }}><XAxis type="number" tickFormatter={(value) => currency(value, true)} tick={{ fontSize: 10 }} /><YAxis type="category" dataKey="name" width={115} tick={{ fontSize: 10 }} /><Tooltip formatter={tooltipFormatter} /><Bar dataKey="value" name="Spend" fill="#0891b2" radius={[0, 5, 5, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></div>}
         </Panel>
         <Panel title="Business-unit spend" subtitle="Spend ownership across the organization">
-          <div className="h-72" aria-label="Business unit spend chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={businessUnits}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="name" tick={{ fontSize: 10 }} /><YAxis tickFormatter={(value) => currency(value, true)} tick={{ fontSize: 10 }} width={65} /><Tooltip formatter={tooltipFormatter} /><Bar dataKey="value" name="Spend" fill="#14b8a6" radius={[5, 5, 0, 0]} /></BarChart></ResponsiveContainer></div>
+          {businessUnits.length === 0 ? <EmptyState message="No business-unit spend is available." /> : <div className="h-72 min-w-0" aria-label="Business unit spend chart"><ResponsiveContainer width="100%" height="100%" minWidth={0}><BarChart data={businessUnits}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="name" tick={{ fontSize: 10 }} /><YAxis tickFormatter={(value) => currency(value, true)} tick={{ fontSize: 10 }} width={65} /><Tooltip formatter={tooltipFormatter} /><Bar dataKey="value" name="Spend" fill="#14b8a6" radius={[5, 5, 0, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></div>}
         </Panel>
       </div>
     </>
